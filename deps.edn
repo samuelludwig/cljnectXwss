@@ -1,6 +1,7 @@
 {:paths ["src" "resources"]
  :deps {org.clojure/clojure {:mvn/version "1.11.1"}
-        org.clojure/test.check {:mvn/version "1.1.0"}}
+        org.clojure/test.check {:mvn/version "1.1.0"}
+        com.taoensso/timbre {:mvn/version "5.2.1"}}
  :aliases
  {:run-m {:main-opts ["-m" "dot.cljnect4wss"]}
   :run-x {:ns-default dot.cljnect4wss
