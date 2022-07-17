@@ -21,12 +21,11 @@
 (defn generate-board
   "Generates an empty connect 4 board with the given dimensions."
   [w h]
-  (letfn [(from-zero-up-to [x] (range 0 x))]
-    {:dimensions {:width w :height h}
-     :spaces
-     (for [x (from-zero-up-to w)
-           y (from-zero-up-to h)]
-       {:x x :y y :occupant nil})}))
+  {:dimensions {:width w :height h}
+   :spaces
+   (for [x (range 0 w)
+         y (range 0 h)]
+     {:x x :y y :occupant nil})})
 
 (s/def ::board (s/with-gen
                  (s/keys :req-un [::dimensions ::spaces])
@@ -34,6 +33,8 @@
                     #{(generate-board
                         (inc (rand-int 16))
                         (inc (rand-int 16)))})))
+
+;(s/def ::game (s/keys :req-un [::board ::players]))
 
 (comment
   (generate-board 2 2)
@@ -46,6 +47,9 @@
                                    (-> space :y (= y))
                                    space))]
     (some our-space? (:spaces board))))
+
+(def myboard (generate-board 3 3))
+(space-at myboard 1 1)
 
 (s/fdef neighbours-of
   :args (s/cat :b ::board
@@ -87,6 +91,22 @@
      :EAST      (point (inc x) y)
      :WEST      (point (dec x) y)}))
 
+(defn friendly?
+  "Return whether or not the occupants in the given spaces are the same."
+  [space1 space2]
+  (= (:occupant space1)
+     (:occupant space2)))
+
+(defn friendly-neighbours
+  "Return the neighbouring spaces for each cardinal direction like in
+  `neighbours-of`, but only where the occupants match the occupant of the
+  subject space."
+  [board space]
+  (let [nbs (neighbours-of board space)]
+    (into {} (filter
+               (fn [[_k v]] (friendly? space v))
+               nbs))))
+
 (comment
   (g/generate (s/gen ::board))
   (g/generate (s/gen ::space))
@@ -94,9 +114,38 @@
   (stest/check `neighbours-of)
   (def ex-board (generate-board 7 6))
   (def ex-space (space-at ex-board 4 4))
-  (neighbours-of ex-board ex-space))
+  (neighbours-of ex-board ex-space)
 
-(defn get-horizontal-neighbours [some-board some-space] nil)
+  (def my-board
+    {:dimensions {:width 3, :height 3},
+     :spaces
+     [{:x 0, :y 0, :occupant nil}
+      {:x 0, :y 1, :occupant :R}
+      {:x 0, :y 2, :occupant nil}
+      {:x 1, :y 0, :occupant :B}
+      {:x 1, :y 1, :occupant :R}
+      {:x 1, :y 2, :occupant :R}
+      {:x 2, :y 0, :occupant :B}
+      {:x 2, :y 1, :occupant :B}
+      {:x 2, :y 2, :occupant nil}]})
+  (def my-space (space-at my-board 1 1))
+
+  (friendly-neighbours my-board my-space)
+  (friendly-neighbours my-board (space-at my-board 1 0)))
+
+
+(defn horizontal-neighbours [board space]
+  (-> board
+      (neighbours-of space)
+      ((juxt :EAST :WEST))))
+
+(defn vertical-neighbours [board space]
+  (-> board
+      (neighbours-of space)
+      ((juxt :NORTH :SOUTH))))
+
+(horizontal-neighbours ex-board ex-space)
+(vertical-neighbours ex-board ex-space)
 
 (defn greet
   "Callable entry point to the application."
