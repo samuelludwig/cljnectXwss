@@ -2,7 +2,7 @@
   (:require
     [clojure.spec.alpha :as s]
     [clojure.spec.gen.alpha :as g]
-    [clojure.spec.test.check :as stest]
+    [clojure.spec.test.alpha :as stest]
     [clojure.string :as string]
     [clojure.edn :as edn]))
 
@@ -18,7 +18,7 @@
   [spec]
   (-> spec s/gen g/sample))
 
-(def read-ednfile (comp edn/read-string slurp))
+;(def read-ednfile (comp edn/read-string slurp))
 
 (defn if-comp [comparison values then else]
   (if (apply comparison values) then else))
@@ -84,13 +84,19 @@
 (defn uncons [l]
   [(first l) (rest l)])
 
-(defn map-kvs [f m]
-  (->> m to-pairs (map f) to-map))
+(defn on-kvs [operation f m]
+  (->> m to-pairs (operation f) to-map))
+
+(def map-kvs (partial on-kvs map))
+(def filter-kvs (partial on-kvs filter))
 
 (defn map-keys [f m]
   (let [[ks vs] [(keys m) (vals m)]
         new-keys (map f ks)]
     (zipmap new-keys vs)))
+
+(defn filter-vals [f m]
+  (select-keys m (for [[k v] m :when (f v)] k)))
 
 (defn map-vals [f m]
   (let [[ks vs] [(keys m) (vals m)]

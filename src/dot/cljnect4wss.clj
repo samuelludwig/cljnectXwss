@@ -3,7 +3,8 @@
    [clojure.spec.alpha :as s]
    [clojure.spec.gen.alpha :as g]
    [clojure.spec.test.alpha :as stest]
-   [taoensso.timbre :as log])
+   [taoensso.timbre :as log]
+   [dot.cljnect4wss.utils.prelude :refer [filter-vals]])
   (:gen-class))
 
 (s/def ::x (s/and int? #(<= 0 %)))
@@ -103,9 +104,9 @@
   subject space."
   [board space]
   (let [nbs (neighbours-of board space)]
-    (into {} (filter
-               (fn [[_k v]] (friendly? space v))
-               nbs))))
+    (filter-vals
+       (fn [v] (friendly? space v))
+       nbs)))
 
 (comment
   (g/generate (s/gen ::board))
