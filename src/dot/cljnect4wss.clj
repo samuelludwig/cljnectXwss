@@ -105,8 +105,8 @@
   [board space]
   (let [nbs (neighbours-of board space)]
     (filter-vals
-       (fn [v] (friendly? space v))
-       nbs)))
+      (fn [v] (friendly? space v))
+      nbs)))
 
 (comment
   (g/generate (s/gen ::board))
@@ -134,11 +134,20 @@
   (friendly-neighbours my-board my-space)
   (friendly-neighbours my-board (space-at my-board 1 0)))
 
+(defn horizontal-neighbours
+  ([dir-map]
+   ((juxt :WEST :EAST) dir-map))
+  ([board space]
+   (-> board
+       (neighbours-of space)
+       ((juxt :WEST :EAST)))))
 
-(defn horizontal-neighbours [board space]
-  (-> board
-      (neighbours-of space)
-      ((juxt :EAST :WEST))))
+(def friendly-horizontal-neighbours
+  (comp horizontal-neighbours friendly-neighbours))
+
+(comment
+  (horizontal-neighbours my-board my-space)
+  (friendly-horizontal-neighbours my-board my-space))
 
 (defn vertical-neighbours [board space]
   (-> board
