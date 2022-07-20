@@ -1,10 +1,11 @@
-(ns dot.cljnect4wss.utils.prelude
+(ns cljnect4wss.utils.prelude
   (:require
-    [clojure.spec.alpha :as s]
-    [clojure.spec.gen.alpha :as g]
-    [clojure.spec.test.alpha :as stest]
-    [clojure.string :as string]
-    [clojure.edn :as edn]))
+   [clojure.spec.alpha :as s]
+   [clojure.spec.gen.alpha :as g]
+   [clojure.spec.test.alpha :as stest]
+   [clojure.string :as string]
+   [clojure.edn :as edn])
+  (:gen-class))
 
 (defn not-nil? [x] (not (nil? x)))
 
@@ -126,3 +127,22 @@
       (conj acc (assoc v key-name k)))
     []
     m))
+
+(defn confirm-if
+  "Takes a set of test pairs, [t1 t2]. For each pair, if t1 evaluates to true,
+  and t2 does not evaluate to true, the function returns false. All other
+  evaluation possibilites return true.
+
+  Read as: 'Confirm that if A is true, B is also true'."
+  [& cond-form-pairs]
+  (when (-> cond-form-pairs count odd?)
+    (throw
+      (Exception. "confirm-if expects an even number of arguments")))
+
+  (let [pairs (partition 2 cond-form-pairs)]
+    (boolean (reduce
+               (fn [acc [condition check]]
+                 (and acc (or (not condition) check)))
+               true
+               pairs))))
+

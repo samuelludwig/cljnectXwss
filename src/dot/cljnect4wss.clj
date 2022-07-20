@@ -4,7 +4,7 @@
    [clojure.spec.gen.alpha :as g]
    [clojure.spec.test.alpha :as stest]
    [taoensso.timbre :as log]
-   [dot.cljnect4wss.utils.prelude :refer [filter-vals]])
+   [cljnect4wss.utils.prelude :refer [confirm-if filter-vals]])
   (:gen-class))
 
 (s/def ::x (s/and int? #(<= 0 %)))
@@ -64,14 +64,11 @@
                      NORTHEAST NORTH NORTHWEST WEST] :as dirs} (:ret %)
              all-spaces? (fn [] (s/valid? ::spaces (vals dirs)))]
          (and
-           (if (= x 0) (= nil SOUTHWEST WEST NORTHWEST) true)
-           (if (= y 0) (= nil SOUTHWEST SOUTH SOUTHEAST) true)
-           (if (= x (-> board :dimensions :width dec))
-             (= nil EAST NORTHEAST SOUTHEAST)
-             true)
-           (if (= y (-> board :dimensions :height dec))
-             (= nil NORTHEAST NORTH NORTHWEST)
-             true)
+           (confirm-if
+             (= x 0) (= nil SOUTHWEST WEST NORTHWEST)
+             (= y 0) (= nil SOUTHWEST SOUTH SOUTHEAST)
+             (= x (-> board :dimensions :width dec)) (= nil EAST NORTHEAST SOUTHEAST)
+             (= y (-> board :dimensions :height dec)) (= nil NORTHEAST NORTH NORTHWEST))
            (if (and (< 0 y (-> board :dimensions :height dec)) ; if we're not on an edge,
                     (< 0 x (-> board :dimensions :width dec))) ; all neighbours should be spaces
              (all-spaces?)
