@@ -37,25 +37,30 @@
 
 ;(s/def ::game (s/keys :req-un [::board ::players]))
 
-(comment
-  (generate-board 2 2)
-  (generate-board 7 6))
-
 (defn space? [m] (s/valid? ::space m))
 
-(defn space-at [board x y]
+(defn space-at
+  "Returns the ::space at position (x,y) on the given board."
+  [board x y]
   (letfn [(our-space? [space] (and (-> space :x (= x))
                                    (-> space :y (= y))
                                    space))]
     (some our-space? (:spaces board))))
 
-(def myboard (generate-board 3 3))
-(space-at myboard 1 1)
+(comment
+  (s/form ::space)
+  (generate-board 2 2)
+  (generate-board 7 6)
+
+  (def myboard (generate-board 3 3))
+  (space-at myboard 1 1))
+
+(s/def ::neighbour-map (s/map-of ::direction (s/nilable ::space)))
 
 (s/fdef neighbours-of
   :args (s/cat :b ::board
                :s ::space)
-  :ret (s/map-of ::direction (s/nilable ::space))
+  :ret ::neighbour-map
   ;; confirm we don't violate the boundaries of the board
   :fn #(let [board (-> % :args :b)
              space (-> % :args :s)
@@ -131,16 +136,32 @@
   (friendly-neighbours my-board my-space)
   (friendly-neighbours my-board (space-at my-board 1 0)))
 
-(defn horizontal-neighbours
-  ([dir-map]
-   ((juxt :WEST :EAST) dir-map))
-  ([board space]
+(s/fdef horizontal-neighbours
+  :args (s/or (s/cat :directions (s/coll-of ::direction) :dir-map ::neighbour-map)
+              (s/cat :directions (s/coll-of ::direction) :b ::board :s ::space))
+  :ret (s/coll-of (s/nilable ::space) (s/nilable ::space)))
+(defn project-neighbours
+  "Given a space and a board, get the neighbours of that space on that board
+  according to the directions provided in the first arg. The neighbours will be
+  provided in the order the directions are given.
+  When given a neighbour-map, retuns the directions provided of that map in the
+  format above."
+  ([directions dir-map]
+   ((apply juxt directions) dir-map))
+  ([directions board space]
    (-> board
        (neighbours-of space)
-       ((juxt :WEST :EAST)))))
+       ((apply juxt directions)))))
 
-(def friendly-horizontal-neighbours
-  (comp horizontal-neighbours friendly-neighbours))
+(def horizontal-neighbours (partial project-neighbours [:WEST :EAST]))
+(def vertical-neighbours (partial project-neighbours [:SOUTH :NORTH]))
+(def diagonal-neighbours (partial project-neighbours [:SOUTHWEST :NORTHEAST]))
+(def reverse-diagonal-neighbours (partial project-neighbours [:SOUTHEAST :NORTHWEST]))
+
+(def friendly-horizontal-neighbours (comp horizontal-neighbours friendly-neighbours))
+(def friendly-vertical-neighbours (comp vertical-neighbours friendly-neighbours))
+(def friendly-diagonal-neighbours (comp diagonal-neighbours friendly-neighbours))
+(def friendly-reverse-diagonal-neighbours (comp reverse-diagonal-neighbours friendly-neighbours))
 
 (comment
   (horizontal-neighbours my-board my-space)
